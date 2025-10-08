@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-y+*)0usm3v&bik#dcppanqlg@f0(%^u9rre-wx(-b!#*0$n!s)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.56.1', 'localhost', '127.0.0.1','0.0.0.0']
+ALLOWED_HOSTS = ['192.168.56.1', 'localhost', '127.0.0.1','0.0.0.0','.onrender.com']
 # Application definition
 
 INSTALLED_APPS = [
@@ -46,6 +46,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'student.urls'
@@ -117,7 +118,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -154,3 +155,4 @@ LOGGING = {
         },
     },
 }
+
