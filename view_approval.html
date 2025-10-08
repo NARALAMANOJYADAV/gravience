@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>View Approval</h2>
+
+<div style="margin-bottom:16px; padding:8px; border:1px solid #ddd; background:#fafafa;">
+  <div id="va-inline" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    <span style="font-size:32px; font-weight:700;">ROLL NO:</span>
+    <input id="va-roll" type="text" placeholder="64"
+           style="padding:8px 10px; width:120px; font-size:28px;"
+           autocomplete="off" aria-label="roll number" />
+   
+    <span id="va-result" style="font-weight:700; font-size:18px;"></span>
+     <button id="va-btn" type="button"
+            style="padding:8px 12px; font-size:20px; background:#007bff; color:#fff; border:none; border-radius:4px;">
+      CHECK
+    </button>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function setResult(text, ok){
+    const out = document.getElementById('va-result');
+    if (!out) return;
+    out.innerText = text;
+    out.style.color = ok === null ? '#333' : (ok ? 'green' : 'red');
+  }
+
+  function runVaCheck(){
+    const input = document.getElementById('va-roll');
+    if (!input) return;
+    const roll = input.value.trim();
+    if (!roll){ setResult('Please enter a roll number.', false); return; }
+    setResult('Checking...', null);
+    fetch('/status/' + encodeURIComponent(roll) + '/')
+      .then(r => r.json())
+      .then(j=>{
+        if (!j.found) { setResult('No submission found for this roll number.', false); return; }
+        const approved = Boolean(j.counselor_approved) && Boolean(j.incharge_approved) && Boolean(j.hod_approved) && Boolean(j.director_approved);
+        setResult(approved ? 'Approved' : 'Not Approved', approved);
+      })
+      .catch(e=>{ setResult('Error fetching status', false); });
+  }
+
+  function debounce(fn, wait){ let t = null; return function(...a){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,a), wait); }; }
+  const debouncedCheck = debounce(runVaCheck, 400);
+
+  const btn = document.getElementById('va-btn');
+  const inp = document.getElementById('va-roll');
+  if (inp) {
+    inp.focus();
+    inp.addEventListener('input', debouncedCheck);
+    inp.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); runVaCheck(); } });
+  }
+  if (btn) btn.addEventListener('click', runVaCheck);
+
+  try{ 
+    const params = new URLSearchParams(window.location.search); 
+    const pre = params.get('roll'); 
+    if (pre && inp){ inp.value = pre; runVaCheck(); } 
+  }catch(e){}
+
+});
+</script>
+{% endblock %}
