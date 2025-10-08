@@ -1,0 +1,32 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Counseling App</title>
+  <link rel="stylesheet" href="{% static 'stylesheets/styles.css' %}">
+  <style>
+    body{ font-family: Arial, Helvetica, sans-serif; margin:20px }
+    .container{ max-width:1200px; margin:auto }
+  </style>
+</head>
+<body>
+  <main class="container">
+    {% if messages %}
+      <ul class="messages">
+        {% for m in messages %}
+          <li class="message {{ m.tags }}">{{ m }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="container" style="margin-top:40px; color:#666; font-size:14px">
+    <hr>
+    <small>Counseling app — development mode</small>
+  </footer>
+</body>
+</html>

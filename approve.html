@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Approval for {{ obj.student_name }}</h2>
+{% if error %}<p style="color:red">{{ error }}</p>{% endif %}
+<p>Current status: {{ obj.get_status_display }}</p>
+<form method="post">
+  {% csrf_token %}
+  <label>Reason (optional)</label><br>
+  <textarea name="reason" rows="4" cols="50"></textarea><br>
+  <button type="submit" name="action" value="accept">Accept</button>
+  <button type="submit" name="action" value="reject">Reject</button>
+</form>
+{% endblock %}

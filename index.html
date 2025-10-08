@@ -1,0 +1,434 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRIEVANCE MANAGEMENT SYSTEM</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Ensure tables don't grow unexpectedly and cell content is clipped */
+        table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+        th, td { overflow: hidden; word-wrap: break-word; vertical-align: top; }
+        /* Constrain the top photo cell so it never overflows */
+        td[rowspan] { max-width: 180px; box-sizing: border-box; }
+        /* Make inputs inside cells fit and not overflow */
+        input, textarea, select { max-width: 100%; box-sizing: border-box; }
+        /* Small tweaks for file input label */
+        label[for="student_photo"] { display: inline-block; }
+    </style>
+</head>
+<body>
+    
+    <div class="title-container">
+        <h1 class="main-title">GRIEVANCE MANAGEMENT SYSTEM</h1>
+    </div>
+    {% include '_view_approval_button.html' %}
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <fieldset>
+            <table border="1" cellspacing="0" cellpadding="5">
+    <tr>
+        <th>Academic Year</th>
+        <td><input type="number" name="academic_year"></td>
+        <td>RTF <input type="checkbox" name="rtf"></td>
+        <td>MQ <input type="checkbox" name="mq"></td>
+        <td>Any Other <input type="checkbox" name="any_other"></td>
+
+<td rowspan="5" style="text-align:center; vertical-align:top; width:180px;">
+
+    <!-- Photo Preview Box (required at top for the project) -->
+    <div id="photoContainer" style="width:150px; height:150px; border:1px solid #000; margin:auto;
+                display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
+        <img id="photoPreview" src="" alt="Photo"
+             style="max-width:100%; max-height:100%; display:none;">
+        <span id="photoPlaceholder">Photo</span>
+        
+    </div>
+    <div id="va-local-result" style="margin-top:8px; font-weight:700; min-height:20px; text-align:center;"></div>
+
+    <!-- Custom File Button (top mandatory photo) -->
+    <div style="margin-top:10px;">
+        <label for="student_photo" 
+               style="cursor:pointer; padding:6px 12px; background:#007bff; color:#fff;
+                      border-radius:4px; font-size:14px; display:inline-block;">
+            Choose File
+        </label>
+        <input type="file" id="student_photo" name="student_photo"
+               accept="image/*" onchange="previewPhoto(event)" style="display:none;">
+    </div>
+
+</td>
+
+<script>
+function previewPhoto(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById("photoPreview");
+    const placeholder = document.getElementById("photoPlaceholder");
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = "block";
+            placeholder.style.display = "none";
+        }
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = "none";
+        placeholder.style.display = "block";
+    }
+}
+</script>
+
+<script>
+// Local View Approval button behavior (uses roll_no field in the form)
+;(function(){
+    const vaBtn = document.getElementById('va-local-btn');
+    const vaResult = document.getElementById('va-local-result');
+    const rollInput = document.getElementById('roll_no');
+
+    function updateVaButtonState(){
+        if (!rollInput) return;
+        const has = rollInput.value && rollInput.value.trim().length > 0;
+        vaBtn.disabled = !has;
+        vaBtn.style.opacity = has ? '1' : '0.6';
+        vaBtn.style.cursor = has ? 'pointer' : 'default';
+    }
+
+    if (rollInput){
+        rollInput.addEventListener('input', updateVaButtonState);
+        // init
+        updateVaButtonState();
+    }
+
+    vaBtn.addEventListener('click', function(){
+        const roll = rollInput ? rollInput.value.trim() : '';
+        vaResult.innerText = '';
+        if (!roll){
+            vaResult.innerText = 'Please enter your Roll No in the form above.';
+            vaResult.style.color = 'red';
+            return;
+        }
+        fetch('/status/' + encodeURIComponent(roll) + '/')
+            .then(r => r.json())
+            .then(j => {
+                if (!j.found){ vaResult.innerText = 'No submission found for this roll number.'; vaResult.style.color = 'red'; return; }
+                const approved = Boolean(j.counselor_approved) && Boolean(j.incharge_approved) && Boolean(j.hod_approved) && Boolean(j.director_approved);
+                vaResult.innerText = approved ? 'Approved' : 'Not Approved';
+                vaResult.style.color = approved ? 'green' : 'red';
+            })
+            .catch(e => { vaResult.innerText = 'Error fetching status'; vaResult.style.color = 'red'; });
+    });
+})();
+</script>
+
+
+    </tr>
+
+    <tr>
+        <th colspan="2">Name of counselor</th>
+        <td><input type="text" name="counselor_name"></td>
+        <th>Year - Sem </th>
+        <td><input type="text" name="year_sem"></td>
+    </tr>
+
+    <tr>
+        <th colspan="2">Student's Name</th>
+        <td>
+            <input type="text" name="student_name" id="student_name">
+            <div class="error-message" id="name-error">Please enter your name</div>
+        </td>
+        <th>Roll No</th>
+        <td><input type="text" id="roll_no" name="roll_no"></td>
+    </tr>
+    <!-- live status check removed from index page (use My Submissions page to check status) -->
+
+    <tr>
+        <th colspan="2">Student's Phone</th>
+        <td><input type="number" name="student_phone"></td>
+        <th>Father's Phone</th>
+        <td><input type="number" name="father_phone"></td>
+    </tr>
+</table>
+
+
+
+          <table>
+            <tr>
+                <th colspan="2">Studdent's Residence</th>
+                <td colspan="4">Hostel<input type="checkbox">/Days Scholor<input type="checkbox">/College Bus<input type="checkbox">/Rtc Bus <input type="checkbox"></td>
+            </tr>
+            <tr>
+                <th colspan="2">NBKRIST Hostel Name</th>
+                <td colspan="2"><input type="text" name="hostel_name"></td>
+                <th>Room No</th>
+                <td><input type="number" name="room_no"></td>
+            </tr>
+            <tr>
+                <th rowspan="3">Hostel Roommates</th>
+                <td style="text-align: center;">1</td>
+                <td colspan="2"><input type="text" name="roommate1"></td>
+                <th>Roll No1</th>
+                <td><input type="text" name="roll_no1"></td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">2</td>
+                <td colspan="2"><input type="text" name="roommate2"></td>
+                <th>Roll No2</th>
+                <td><input type="text" name="roll_no2"></td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">3</td>
+                <td colspan="2"><input type="text" name="roommate3"></td>
+                <th>Roll No3</th>
+                <td><input type="text" name="roll_no3"></td>
+            </tr>
+          </table>
+          <table>
+            <tr>
+                <th>College Bus Route</th>
+                <td><input type="text" name="bus_route"></td>
+                <th colspan="2">BUS NO</th>
+                <td><input type="number" name="bus_no"></td>
+            </tr>
+            <tr>
+                <th>RTC BUS/Two Wheeler Travel Place</th>
+                <td colspan="4"><input type="text" name="rtc_travel_place"></td>
+            </tr>
+            <tr>
+                <th>Two Wheeler Make & Number</th>
+                <td colspan="4"><input type="text" name="vehicle_details"></td>
+            </tr>
+            <tr>
+                <th>Days Scholar Address</th>
+                <td colspan="4"><input type="text" name="day_scholar_address"></td>
+            </tr>
+            <tr>
+                <th rowspan="4">Days Scholar Roommates
+                    with Roll Numbers
+                </th>
+                <th colspan="2">Name</th>
+                <th colspan="2">Roll No</th>
+            </tr>
+            <tr>
+                <td colspan="2"><input type="text" name="ds_name1"></td>
+                <td colspan="2"><input type="text" name="ds_roll1"></td>
+            </tr>
+            <tr>
+                <td colspan="2"><input type="text" name="ds_name2"></td>
+                <td colspan="2"><input type="text" name="ds_roll2"></td>
+            </tr>
+            <tr>
+                <td colspan="2"><input type="text" name="ds_name3"></td>
+                <td colspan="2"><input type="text" name="ds_roll3"></td>
+            </tr>
+          </table>
+            <table>
+                <tr>
+                    <th>Month</th>
+                    <th><input type="month" name="month1"></th>
+                    <th>Follow-up</th>
+                    <th><input type="month" name="month2"></th>
+                    <th>Follow-up</th>
+                    <th><input type="month" name="month3"></th>
+                    <th>Follow-up</th>
+                    <th><input type="month" name="month4"></th>
+                    <th>Follow-up</th>
+                    <th><input type="month" name="month5"></th>
+                    <th>Follow-up</th>
+                </tr>
+                <tr>
+                    <td>Classes Conducted</td>
+                    <td><input type="number" name="classes_conducted1" min="0"></td>
+                    <td rowspan="4"><textarea name="followup1" rows="4"></textarea></td>
+                    <td><input type="number" name="classes_conducted2" min="0"></td>
+                    <td rowspan="4"><textarea name="followup2" rows="4"></textarea></td>
+                    <td><input type="number" name="classes_conducted3" min="0"></td>
+                    <td rowspan="4"><textarea name="followup3" rows="4"></textarea></td>
+                    <td><input type="number" name="classes_conducted4" min="0"></td>
+                    <td rowspan="4"><textarea name="followup4" rows="4"></textarea></td>
+                    <td><input type="number" name="classes_conducted5" min="0"></td>
+                    <td rowspan="4"><textarea name="followup5" rows="4"></textarea></td>
+                </tr>
+                <tr>
+                    <td>Classes Attended</td>
+                    <td><input type="number" name="classes_attended1" min="0"></td>
+                    <td><input type="number" name="classes_attended2" min="0"></td>
+                    <td><input type="number" name="classes_attended3" min="0"></td>
+                    <td><input type="number" name="classes_attended4" min="0"></td>
+                    <td><input type="number" name="classes_attended5" min="0"></td>
+                </tr>
+                <tr>
+                    <td>% Attendance</td>
+                    <td><input type="number" name="attendance_percent1" min="0" max="100" step="0.01"></td>
+                    <td><input type="number" name="attendance_percent2" min="0" max="100" step="0.01"></td>
+                    <td><input type="number" name="attendance_percent3" min="0" max="100" step="0.01"></td>
+                    <td><input type="number" name="attendance_percent4" min="0" max="100" step="0.01"></td>
+                    <td><input type="number" name="attendance_percent5" min="0" max="100" step="0.01"></td>
+                </tr>
+                <tr>
+                    <td>Monthly Letter(Yes/No)</td>
+                    <td><select name="monthly_letter1"><option value="">Select</option><option value="Yes">Yes</option><option value="No">No</option></select></td>
+                    <td><select name="monthly_letter2"><option value="">Select</option><option value="Yes">Yes</option><option value="No">No</option></select></td>
+                    <td><select name="monthly_letter3"><option value="">Select</option><option value="Yes">Yes</option><option value="No">No</option></select></td>
+                    <td><select name="monthly_letter4"><option value="">Select</option><option value="Yes">Yes</option><option value="No">No</option></select></td>
+                    <td><select name="monthly_letter5"><option value="">Select</option><option value="Yes">Yes</option><option value="No">No</option></select></td>
+                </tr>
+                
+            </table>
+            <table>
+                <tr>
+                    <th colspan="8">ACADEMIC RECORD</th>
+                </tr>
+                <tr>
+                    <th>Subject</th>
+                    <th>I Mid</th>
+                    <th>II Mid</th>
+                    <th>Sessional Marks</th>
+                    <th>End Sem. Marks</th>
+                    <th>Total Marks</th>
+                    <th>Result (P/F)</th>
+                    <th>Year of Pass</th>
+                </tr>
+                <tr>
+                    <td><input type="text" name="subject1"></td>
+                    <td><input type="number" name="mid1_1" min="0"></td>
+                    <td><input type="number" name="mid2_1" min="0"></td>
+                    <td><input type="number" name="sessional1" min="0"></td>
+                    <td><input type="number" name="endsem1" min="0"></td>
+                    <td><input type="number" name="total1" min="0"></td>
+                    <td><select name="result1"><option value="">Select</option><option value="P">P</option><option value="F">F</option></select></td>
+                    <td><input type="number" name="pass_year1" min="2000" max="2099"></td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="subject2"></td>
+                    <td><input type="number" name="mid1_2" min="0"></td>
+                    <td><input type="number" name="mid2_2" min="0"></td>
+                    <td><input type="number" name="sessional2" min="0"></td>
+                    <td><input type="number" name="endsem2" min="0"></td>
+                    <td><input type="number" name="total2" min="0"></td>
+                    <td><select name="result2"><option value="">Select</option><option value="P">P</option><option value="F">F</option></select></td>
+                    <td><input type="number" name="pass_year2" min="2000" max="2099"></td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="subject3"></td>
+                    <td><input type="number" name="mid1_3" min="0"></td>
+                    <td><input type="number" name="mid2_3" min="0"></td>
+                    <td><input type="number" name="sessional3" min="0"></td>
+                    <td><input type="number" name="endsem3" min="0"></td>
+                    <td><input type="number" name="total3" min="0"></td>
+                    <td><select name="result3"><option value="">Select</option><option value="P">P</option><option value="F">F</option></select></td>
+                    <td><input type="number" name="pass_year3" min="2000" max="2099"></td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="subject4"></td>
+                    <td><input type="number" name="mid1_4" min="0"></td>
+                    <td><input type="number" name="mid2_4" min="0"></td>
+                    <td><input type="number" name="sessional4" min="0"></td>
+                    <td><input type="number" name="endsem4" min="0"></td>
+                    <td><input type="number" name="total4" min="0"></td>
+                    <td><select name="result4"><option value="">Select</option><option value="P">P</option><option value="F">F</option></select></td>
+                    <td><input type="number" name="pass_year4" min="2000" max="2099"></td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="subject5"></td>
+                    <td><input type="number" name="mid1_5" min="0"></td>
+                    <td><input type="number" name="mid2_5" min="0"></td>
+                    <td><input type="number" name="sessional5" min="0"></td>
+                    <td><input type="number" name="endsem5" min="0"></td>
+                    <td><input type="number" name="total5" min="0"></td>
+                    <td><select name="result5"><option value="">Select</option><option value="P">P</option><option value="F">F</option></select></td>
+                    <td><input type="number" name="pass_year5" min="2000" max="2099"></td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th colspan="7">Description of Counseling 'with signatures of Student,counselor and HOD</th>
+                </tr>
+                <tr>
+                    <td><input type="date" name="counseling_date1"></td>
+                        <td colspan="7"><input type="text" name="counseling_description1"></td>
+                </tr>
+                
+                <tr>
+                    <th>Date</th>
+                    <th colspan="7">Prizes, Participations, Disciplinary Matters, etc.</th>
+                </tr>
+                <tr>
+                    <td><input type="date" name="counseling_date2"></td>
+                    <td colspan="6"><textarea name="prizes_participations2"></textarea></td>
+                    <td><input type="file" name="prize_file2"></td>
+                </tr>
+                <tr>
+                    <td><input type="date" name="counseling_date3"></td>
+                    <td colspan="6"><textarea name="prizes_participations3"></textarea></td>
+                    <td><input type="file" name="prize_file3"></td>
+                </tr>
+                <tr>
+                    <td><input type="date" name="counseling_date4"></td>
+                    <td colspan="6"><textarea name="prizes_participations4"></textarea></td>
+                    <td><input type="file" name="prize_file4"></td>
+                </tr>
+                <tr>
+                    <td><input type="date" name="counseling_date5"></td>
+                    <td colspan="6"><textarea name="prizes_participations5"></textarea></td>
+                    <td><input type="file" name="prize_file5"></td>
+                </tr>
+                <tr>
+                    <td><input type="date" name="counseling_date6"></td>
+                    <td colspan="6"><textarea name="prizes_participations6"></textarea></td>
+                    <td><input type="file" name="prize_file6"></td>
+                </tr>
+            </table>
+            
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="button" onclick="clearForm()" style="padding: 10px 20px; margin: 0 10px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Clear</button>
+                <button type="button" onclick="saveForm()" style="padding: 10px 20px; margin: 0 10px; background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">Save</button>
+                <button type="submit" style="padding: 10px 20px; background-color: #4CAF50; color: white;">Submit</button>
+                
+            </div>
+       <script>
+        
+        function clearForm() {
+            const inputs = document.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    input.checked = false;
+                } else {
+                    input.value = '';
+                    input.classList.remove('input-error');
+                }
+            });
+            document.getElementById('name-error').style.display = 'none';
+        }
+
+        function saveForm() {
+            // Get all form data
+            const formData = {};
+
+            // Get all input fields
+            document.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.name) {
+                    if (input.type === 'checkbox') {
+                        formData[input.name] = input.checked;
+                    } else {
+                        formData[input.name] = input.value;
+                    }
+                }
+            });
+
+            // Save to localStorage
+            localStorage.setItem('counselingFormData', JSON.stringify(formData));
+            alert('Form data saved successfully!');
+        }
+       </script>
+        </fieldset>
+    </form>
+    <!-- removed stray example fetch snippet that used undefined variables and broke later scripts -->
+    <!-- live status removed from index page - use 'My Submissions' page to check approvals -->
+</body>
+</html>
