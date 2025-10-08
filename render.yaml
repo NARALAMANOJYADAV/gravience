@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: student-django
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn student.wsgi"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: student.settings
+      - key: SECRET_KEY
+        value: *8+)c%1v2fd@q1qn#qz$nfpt1az9%m_fthm#@dgfmo1fe(_z1q
+      - key: DEBUG
+        value: False
