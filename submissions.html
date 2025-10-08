@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center;">
+  <h2 style="margin:0">Submissions</h2>
+  <a href="{% url 'view_approval' %}" style="background:#007bff;color:#fff;padding:8px 12px;border-radius:4px;text-decoration:none;">View Approval</a>
+</div>
+<div style="margin-bottom:16px; padding:8px; border:1px solid #ddd; background:#fafafa; max-width:700px;">
+  <strong>Check your submission</strong>
+  <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+    <label for="check-roll">Enter roll no:</label>
+    <input id="check-roll" type="text" style="padding:4px 6px; width:180px;" />
+    <button id="check-btn" type="button" style="padding:6px 8px;">Check</button>
+    <button id="check-btn-global" type="button" style="background:#007bff; color:#fff; padding:6px 10px; border:none; border-radius:4px;">View Approval</button>
+  </div>
+  <div id="check-result" style="margin-top:8px; color:#333;"></div>
+</div>
+<table border="1" cellpadding="6" cellspacing="0">
+  <tr><th>ID</th><th>Student</th><th>Description</th><th>Photo</th><th>Status</th><th>Actions</th></tr>
+  {% for it in items %}
+  <tr>
+    <td>{{ it.id }}</td>
+    <td>{{ it.student_name }}</td>
+    <td>{{ it.counseling_description1|default:"" }}</td>
+    <td>
+      {% if it.student_photo %}
+        <img src="{{ it.student_photo.url }}" width="80">
+      {% else %}-{% endif %}
+    </td>
+    <td>{{ it.get_status_display }}</td>
+    <td>
+      <a href="{% url 'approve' it.id %}">Open</a>
+      <!-- Dedicated View Approval button (does not require URL editing) -->
+      <button type="button" class="view-approval-btn" data-roll="{{ it.roll_no }}" style="margin-left:8px; padding:4px 8px;">View Approval</button>
+      <span class="va-inline-result" style="margin-left:8px; font-weight:700;"></span>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  function doCheck(roll, targetOut){
+    if (!roll) { targetOut.innerText = 'Please enter a roll number.'; targetOut.style.color = 'red'; return; }
+    targetOut.innerText = 'Checking...'; targetOut.style.color = '';
+    fetch('/status/' + encodeURIComponent(roll) + '/')
+      .then(r => r.json())
+      .then(j=>{
+        if (!j.found) { targetOut.innerText = 'No submission found for this roll number.'; targetOut.style.color = 'red'; return; }
+        const approved = Boolean(j.counselor_approved) && Boolean(j.incharge_approved) && Boolean(j.hod_approved) && Boolean(j.director_approved);
+        targetOut.innerText = approved ? 'Approved' : 'Not Approved';
+        targetOut.style.color = approved ? 'green' : 'red';
+      })
+      .catch(e=>{ targetOut.innerText = 'Error fetching status'; targetOut.style.color = 'red'; });
+  }
+
+  var checkBtn = document.getElementById('check-btn');
+  var checkBtnGlobal = document.getElementById('check-btn-global');
+  var checkRoll = document.getElementById('check-roll');
+  var checkResult = document.getElementById('check-result');
+
+  if (checkBtn){
+    checkBtn.addEventListener('click', function(){
+      const roll = checkRoll ? checkRoll.value.trim() : '';
+      doCheck(roll, checkResult);
+    });
+  }
+
+  if (checkBtnGlobal){
+    checkBtnGlobal.addEventListener('click', function(){
+      const roll = checkRoll ? checkRoll.value.trim() : '';
+      doCheck(roll, checkResult);
+    });
+  }
+
+  if (checkRoll){
+    checkRoll.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.keyCode === 13){ e.preventDefault(); if (checkBtnGlobal) checkBtnGlobal.click(); }
+    });
+  }
+
+  // Wire the inline View Approval buttons in the table
+  document.querySelectorAll('.view-approval-btn').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const roll = btn.dataset.roll;
+      const resultSpan = btn.parentElement.querySelector('.va-inline-result');
+      if (!roll || roll.trim().length===0){
+        resultSpan.innerText = 'No roll';
+        resultSpan.style.color = 'red';
+        return;
+      }
+      resultSpan.innerText = 'Checking...';
+      resultSpan.style.color = '';
+      fetch('/status/' + encodeURIComponent(roll) + '/')
+        .then(r=>r.json())
+        .then(j=>{
+          if (!j.found){ resultSpan.innerText = 'Not found'; resultSpan.style.color = 'red'; return; }
+          const approved = Boolean(j.counselor_approved) && Boolean(j.incharge_approved) && Boolean(j.hod_approved) && Boolean(j.director_approved);
+          resultSpan.innerText = approved ? 'Approved' : 'Not Approved';
+          resultSpan.style.color = approved ? 'green' : 'red';
+        })
+        .catch(e=>{ resultSpan.innerText = 'Error'; resultSpan.style.color = 'red'; });
+    });
+  });
+
+});
+</script>
+
+{% endblock %}
