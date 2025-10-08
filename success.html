@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Form Submitted</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f3f3f3;
+            text-align: center;
+            padding: 50px;
+        }
+
+        .success-box {
+            background-color: #fff;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 40px;
+            max-width: 500px;
+            margin: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .success-box h2 {
+            color: #4CAF50;
+        }
+
+        .success-box p {
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        .success-box a {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .success-box a:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-box">
+        <h2>Thank You!</h2>
+        <p>Your counseling details have been successfully submitted.</p>
+        <a href="{% url 'counseling_form' %}">Submit Another Response</a>
+    </div>
+</body>
+</html>
